@@ -4,4 +4,4 @@ Tested on Visual Studio Enterprise 2015 (with Visual C++ project / console appli
 
 Special thanks: https://ffmpeg.zeranoe.com/builds/
 
-Backup: ...
+Document: https://www.ffmpeg.org/documentation.html

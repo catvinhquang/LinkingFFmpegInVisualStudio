@@ -17,6 +17,15 @@ Dev: include folder (*.h) and lib folder (*.lib)
     -> VC++ Directories
         -> Include Directories -> Edit -> Point to FFmpeg's include folder
         -> Libraries Directories -> Edit -> Point to FFmpeg's lib folder
+	-> Linker -> Input -> Additional Dependencies -> Edit
+		avcodec.lib
+		avdevice.lib
+		avfilter.lib
+		avformat.lib
+		avutil.lib
+		postproc.lib
+		swresample.lib
+		swscale.lib
 
 7. For C++
 #include <iostream>
