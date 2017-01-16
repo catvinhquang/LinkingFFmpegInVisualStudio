@@ -1,0 +1,1 @@
+*.LIB, *.H, *.DLL in this project isn't same version in FFmpegDemo project
