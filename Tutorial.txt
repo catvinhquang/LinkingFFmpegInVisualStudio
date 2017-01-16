@@ -45,7 +45,7 @@ void main()
 
 8. For C
 // NOTE: Must be change method compile first
-// Project Properties -> C/C++ -> Compile As -> Compile as C Code (/TC)
+// Project Properties -> C/C++ -> All Options -> Compile As -> Compile as C Code (/TC)
 
 #include <libavcodec\avcodec.h>
 
