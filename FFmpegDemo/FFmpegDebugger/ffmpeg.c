@@ -23,7 +23,7 @@
 * multimedia converter based on the FFmpeg libraries
 */
 
-#pragma warning(disable: 4996)
+#pragma warning (disable : 4996)
 
 #include "config.h"
 #include <ctype.h>
@@ -67,14 +67,6 @@
 # include "libavfilter/avfilter.h"
 # include "libavfilter/buffersrc.h"
 # include "libavfilter/buffersink.h"
-
-#pragma comment(lib, "avcodec.lib")
-#pragma comment(lib, "avdevice.lib")
-#pragma comment(lib, "avfilter.lib")
-#pragma comment(lib, "avformat.lib")
-#pragma comment(lib, "avutil.lib")
-#pragma comment(lib, "swresample.lib")
-#pragma comment(lib, "swscale.lib")
 
 #if HAVE_SYS_RESOURCE_H
 #include <sys/time.h>
