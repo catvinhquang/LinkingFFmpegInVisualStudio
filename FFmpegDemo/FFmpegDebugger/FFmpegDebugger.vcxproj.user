@@ -4,4 +4,7 @@
     <LocalDebuggerCommandArguments>-i C:\Users\CPU10987-local\Desktop\original.mp4 -vf scale=360:640 -ss 00:00:10 -t 00:00:10 C:\Users\CPU10987-local\Desktop\result.mp4</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup>
+    <ShowAllFiles>false</ShowAllFiles>
+  </PropertyGroup>
 </Project>
