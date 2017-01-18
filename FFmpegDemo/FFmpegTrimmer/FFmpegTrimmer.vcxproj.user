@@ -4,7 +4,7 @@
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>-i original.mp4 -vf scale=360:640 -ss 00:00:05 -to 00:00:15 result.mp4</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>original.mp4 result.mp4</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

@@ -19,16 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cmdutils.c" />
-    <ClCompile Include="ffmpeg.c" />
-    <ClCompile Include="ffmpeg_filter.c" />
-    <ClCompile Include="ffmpeg_opt.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="cmdutils.h" />
-    <ClInclude Include="cmdutils_common_opts.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="ffmpeg.h" />
+    <ClCompile Include="Source.c" />
+    <ClCompile Include="transcoding.c" />
+    <ClCompile Include="Trim.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

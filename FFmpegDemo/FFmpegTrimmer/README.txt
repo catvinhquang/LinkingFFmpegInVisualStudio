@@ -1,23 +1,14 @@
-*.LIB, *.H, *.DLL in this project isn't same version in FFmpegDemo project
+﻿Scale:
+#include <libswscale/swscale.h>
+sws_ctx
+sws_scale
+đầu vào và đầu ra là mảng uint8_t (dữ liệu ảnh - frame)
 
-FFmpeg commands:
-1. Trim without reencode:
--i ./input.mp4 -ss 00:00:10 -t 00:00:30 -c copy ./output.mp4
+Trim:
+Đọc từng packet trong vùng cần cắt và chuyển sang video đích
 
-2. Trim with reencode:
--i ./input.mp4 -ss 00:00:10 -t 00:00:30 ./output.mp4
 
-3. Scale:
--i ./input.mp4 -vf scale=360:640 ./output.mp4
-
-4. Trim and Scale:
--i ./input.mp4 -vf scale=360:640 -ss 00:00:10 -t 00:00:30 ./output.mp4
-
-5. Speed up (timelapse)
--i ./input.mp4 -filter:v "setpts=0.5*PTS" -y ./output.mp4
-
-6. Speed down (slow motion)
--i ./input.mp4 -filter:v "setpts=1.5*PTS" -y ./output.mp4
-
-7. Reverse
--i ./input.mp4 -vf reverse ./output.mp4
+Demuxing - av_read_frame : đọc packet
+Muxing - av_interleaved_write_frame : ghi packet
+Decoding - avcodec_decode_video2/avcodec_decode_audio4 : chuyển packet sang frame
+Encoding - avcodec_encode_video2/avcodec_encode_audio2 : chuyển frame sang packet
