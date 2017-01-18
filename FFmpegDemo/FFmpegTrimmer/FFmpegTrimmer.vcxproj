@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.c" />
     <ClCompile Include="transcoding.c" />
     <ClCompile Include="Trim.c" />
   </ItemGroup>

@@ -37,9 +37,16 @@
 #include <libavfilter/buffersrc.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
+#include <libswscale/swscale.h>
 
 static AVFormatContext *ifmt_ctx;
 static AVFormatContext *ofmt_ctx;
+static int src_w;
+static int src_h;
+static int dst_w;
+static int dst_h;
+static enum AVPixelFormat src_pix_fmt;
+static enum AVPixelFormat dst_pix_fmt = AV_PIX_FMT_YUV420P;
 
 static int open_input_file(const char *filename)
 {
@@ -95,7 +102,6 @@ static int open_output_file(const char *filename)
 		return AVERROR_UNKNOWN;
 	}
 
-
 	for (i = 0; i < ifmt_ctx->nb_streams; i++) {
 		out_stream = avformat_new_stream(ofmt_ctx, NULL);
 		if (!out_stream) {
@@ -120,22 +126,34 @@ static int open_output_file(const char *filename)
 			* sample rate etc.). These properties can be changed for output
 			* streams easily using filters */
 			if (dec_ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
-				enc_ctx->height = dec_ctx->height;
-				enc_ctx->width = dec_ctx->width;
+				src_h = dec_ctx->height;
+				src_w = dec_ctx->width;
+				dst_h = src_h / 2;
+				dst_w = src_w / 2;
+				enc_ctx->height = dec_ctx->height / 2;
+				enc_ctx->width = dec_ctx->width / 2;
 				enc_ctx->sample_aspect_ratio = dec_ctx->sample_aspect_ratio;
 				/* take first format from list of supported formats */
-				if (encoder->pix_fmts)
+				if (encoder->pix_fmts) {
 					enc_ctx->pix_fmt = encoder->pix_fmts[0];
-				else
+					src_pix_fmt = encoder->pix_fmts[0];
+				}
+				else {
 					enc_ctx->pix_fmt = dec_ctx->pix_fmt;
+					src_pix_fmt = dec_ctx->pix_fmt;
+				}
 				/* video time_base can be set to whatever is handy and supported by encoder */
 				enc_ctx->time_base = dec_ctx->time_base;
 
 				/* IMPORTANT: MUST SET THIS PROPERTIES */
 				enc_ctx->bit_rate = dec_ctx->bit_rate;
-				enc_ctx->gop_size = 15;
-				enc_ctx->qmin = 5;
-				enc_ctx->qmax = 25;
+				enc_ctx->gop_size = 20;
+				/*enc_ctx->qmin = 35;
+				enc_ctx->qmax = 50;*/
+				av_opt_set(enc_ctx->priv_data, "profile", "main", 0);
+				//av_opt_set(enc_ctx->priv_data, "crf", "30", 0);
+				av_opt_set(enc_ctx->priv_data, "preset", "ultrafast", 0);
+				av_opt_set(enc_ctx->priv_data, "level", "3.0", 0);
 			}
 			else {
 				enc_ctx->sample_rate = dec_ctx->sample_rate;
@@ -202,7 +220,6 @@ static int encode_write_frame(AVFrame *filt_frame, unsigned int stream_index, in
 	if (!got_frame)
 		got_frame = &got_frame_local;
 
-	//av_log(NULL, AV_LOG_INFO, "Encoding frame\n");
 	/* encode filtered frame */
 	enc_pkt.data = NULL;
 	enc_pkt.size = 0;
@@ -257,6 +274,7 @@ int main(int argc, char **argv)
 	unsigned int i;
 	int got_frame;
 	int(*dec_func)(AVCodecContext *, AVFrame *, int *, const AVPacket *);
+	struct SwsContext *sws_ctx = NULL;
 
 	if (argc != 3) {
 		av_log(NULL, AV_LOG_ERROR, "Usage: %s <input file> <output file>\n", argv[0]);
@@ -270,14 +288,26 @@ int main(int argc, char **argv)
 	if ((ret = open_output_file(argv[2])) < 0)
 		goto end;
 
+	/* create scaling context */
+	sws_ctx = sws_getContext(src_w, src_h, src_pix_fmt,
+		dst_w, dst_h, dst_pix_fmt,
+		SWS_BILINEAR, NULL, NULL, NULL);
+	if (!sws_ctx) {
+		fprintf(stderr,
+			"Impossible to create scale context for the conversion "
+			"fmt:%s s:%dx%d -> fmt:%s s:%dx%d\n",
+			av_get_pix_fmt_name(src_pix_fmt), src_w, src_h,
+			av_get_pix_fmt_name(dst_pix_fmt), dst_w, dst_h);
+		ret = AVERROR(EINVAL);
+		goto end;
+	}
+
 	/* read all packets */
 	while (1) {
 		if ((ret = av_read_frame(ifmt_ctx, &packet)) < 0)
 			break;
 		stream_index = packet.stream_index;
 		type = ifmt_ctx->streams[packet.stream_index]->codec->codec_type;
-		//av_log(NULL, AV_LOG_DEBUG, "Demuxer gave frame of stream_index %u\n", stream_index);
-		//av_log(NULL, AV_LOG_DEBUG, "Going to reencode&filter the frame\n");
 		frame = av_frame_alloc();
 		if (!frame) {
 			ret = AVERROR(ENOMEM);
@@ -297,8 +327,31 @@ int main(int argc, char **argv)
 		}
 
 		if (got_frame) {
+			// only scale video frame
+			if (ifmt_ctx->streams[stream_index]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+				// clone original frame
+				AVFrame *scaled_frame = av_frame_alloc();
+				scaled_frame->format = frame->format;
+				scaled_frame->width = frame->width;
+				scaled_frame->height = frame->height;
+				scaled_frame->channels = frame->channels;
+				scaled_frame->channel_layout = frame->channel_layout;
+				scaled_frame->nb_samples = frame->nb_samples;
+				av_frame_get_buffer(scaled_frame, 32);
+				av_frame_copy(scaled_frame, frame);
+				av_frame_copy_props(scaled_frame, frame);
+
+				sws_scale(sws_ctx, frame->data, frame->linesize,
+					0, src_h, scaled_frame->data, scaled_frame->linesize);
+
+				av_frame_free(&frame);
+				frame = scaled_frame;
+			}
+
+			// encode and write
 			frame->pts = av_frame_get_best_effort_timestamp(frame);
 			ret = encode_write_frame(frame, stream_index, NULL);
+
 			if (ret < 0)
 				goto end;
 		}
@@ -322,8 +375,7 @@ int main(int argc, char **argv)
 
 end:
 	av_packet_unref(&packet);
-	if (!frame)
-	{
+	if (!frame) {
 		av_frame_free(&frame);
 	}
 	for (i = 0; i < ifmt_ctx->nb_streams; i++) {
@@ -335,6 +387,10 @@ end:
 	if (ofmt_ctx && !(ofmt_ctx->oformat->flags & AVFMT_NOFILE))
 		avio_closep(&ofmt_ctx->pb);
 	avformat_free_context(ofmt_ctx);
+
+	/*av_freep(&src_data[0]);
+	av_freep(&dst_data[0]);*/
+	sws_freeContext(sws_ctx);
 
 	if (ret < 0)
 		av_log(NULL, AV_LOG_ERROR, "Error occurred: %s\n", av_err2str(ret));
