@@ -18,10 +18,7 @@
     <Text Include="README.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Trim.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="transcoding.c">
+    <ClCompile Include="Source.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
